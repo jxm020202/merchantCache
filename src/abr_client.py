@@ -325,4 +325,4 @@ class ABRClient:
 # Solution: Register GUID at https://abr.business.gov.au/Tools/WebServices
 #
 # Issue: Connection Timeout
-# Solution: Increase timeout in config.json
+# Solution: Increase timeout value in .env file

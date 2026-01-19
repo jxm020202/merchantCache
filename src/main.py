@@ -5,23 +5,37 @@ Architecture:
 3. Address Lookup - Find head office address
 4. Output - Save enriched merchant data with verification confidence
 """
+import os
 import json
 import warnings
 from pathlib import Path
+from dotenv import load_dotenv
 
 from abr_client import ABRClient
 from google_search_client import GoogleSearchClient
 from data_processor import DataProcessor
+
+# Load environment variables from .env
+load_dotenv()
 
 # Suppress warnings
 warnings.filterwarnings("ignore", message="urllib3")
 
 
 def main():
-    # Load configuration from parent directory
-    config_path = Path(__file__).parent.parent / "config.json"
-    with open(config_path, "r") as f:
-        config = json.load(f)
+    # Load configuration from environment variables
+    config = {
+        "abr_guid": os.getenv("ABR_GUID"),
+        "abr_endpoint": os.getenv("ABR_ENDPOINT"),
+        "timeout": int(os.getenv("TIMEOUT", "5")),
+        "google_api_key": os.getenv("GOOGLE_API_KEY", ""),
+        "google_search_engine_id": os.getenv("GOOGLE_SEARCH_ENGINE_ID", ""),
+        "google_client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+        "google_client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+        "google_redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8080/callback"),
+        "output_file": os.getenv("OUTPUT_FILE", "enriched_merchants_demo.csv"),
+        "enable_verification": os.getenv("ENABLE_VERIFICATION", "true").lower() == "true"
+    }
     
     # Initialize ABR client
     abr_client = ABRClient(

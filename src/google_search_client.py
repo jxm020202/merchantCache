@@ -16,9 +16,9 @@ class GoogleSearchClient:
     3. Enable Custom Search API
     4. Create an API key in Credentials
     5. Setup a Custom Search Engine at https://programmablesearchengine.google.com/
-    6. Add config to config.json with:
-       - "google_api_key": "YOUR_API_KEY"
-       - "google_search_engine_id": "YOUR_SEARCH_ENGINE_ID"
+    6. Add config to .env file with:
+       - GOOGLE_API_KEY="YOUR_API_KEY"
+       - GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID"
     """
     
     def __init__(self, api_key: str, search_engine_id: str, timeout: int = 5, client_id: str = None, client_secret: str = None):
@@ -37,7 +37,7 @@ class GoogleSearchClient:
         self.timeout = timeout
         self.base_url = "https://www.googleapis.com/customsearch/v1"
         self.client_id = client_id
-        self.client_secret = client_secret  # Should come from config.json or environment
+        self.client_secret = client_secret  # Should come from .env file or environment variable
     
     def get_auth_redirect_url(self, redirect_uri: str = "http://localhost:8080/callback") -> str:
         """
@@ -53,7 +53,7 @@ class GoogleSearchClient:
             ValueError: If client_id is not configured
         """
         if not self.client_id:
-            raise ValueError("client_id not configured. Add 'google_client_id' to config.json")
+            raise ValueError("client_id not configured. Add 'GOOGLE_CLIENT_ID' to .env file")
         
         params = {
             "client_id": self.client_id,
@@ -77,7 +77,7 @@ class GoogleSearchClient:
             Dictionary with access_token, refresh_token, etc. or None if failed
         """
         if not self.client_secret:
-            raise ValueError("client_secret not configured. Add 'google_client_secret' to config.json")
+            raise ValueError("client_secret not configured. Add 'GOOGLE_CLIENT_SECRET' to .env file")
         
         token_url = "https://oauth2.googleapis.com/token"
         payload = {
@@ -614,12 +614,10 @@ SETUP_INSTRUCTIONS = """
    - Create new search engine (search the entire web)
    - Copy the Search Engine ID (cx)
 
-3. UPDATE config.json:
+3. UPDATE .env file:
    Add these fields:
-   {
-     "google_api_key": "YOUR_API_KEY_HERE",
-     "google_search_engine_id": "YOUR_SEARCH_ENGINE_ID_HERE"
-   }
+   GOOGLE_API_KEY="YOUR_API_KEY_HERE"
+   GOOGLE_SEARCH_ENGINE_ID="YOUR_SEARCH_ENGINE_ID_HERE"
 
 4. OPTIONAL - OAUTH2 AUTHENTICATION:
    For authenticated requests, get redirect URL:

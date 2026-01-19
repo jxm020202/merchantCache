@@ -1,24 +1,21 @@
 """Test Google Search Client Setup"""
-import os
-from dotenv import load_dotenv
+import json
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from google_search_client import GoogleSearchClient
-
-# Load environment variables from .env
-load_dotenv()
 
 
 def test_google_search_client():
     """Test Google Search Client with configuration"""
     
-    # Load config from environment variables
-    config = {
-        "google_api_key": os.getenv("GOOGLE_API_KEY", ""),
-        "google_search_engine_id": os.getenv("GOOGLE_SEARCH_ENGINE_ID", ""),
-        "google_client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-        "google_client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-        "google_redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8080/callback")
-    }
+    # Load config from parent directory
+    config_path = Path(__file__).parent.parent / "config.json"
+    with open(config_path, "r") as f:
+        config = json.load(f)
     
     # Check if credentials are complete
     print("=" * 60)
@@ -57,7 +54,7 @@ def test_google_search_client():
         print("2. Get your API Key and Client ID")
         print("3. Go to: https://programmablesearchengine.google.com/")
         print("4. Get your Search Engine ID")
-        print("5. Update .env file with these values")
+        print("5. Update config.json with these values")
         return False
     
     print("✅ All credentials present! Testing API calls...")
