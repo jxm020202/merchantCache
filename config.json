@@ -1,0 +1,40 @@
+{
+  "abr_guid": "b5e92e10-b051-4d63-b503-f164dbd56154",
+  "abr_endpoint": "https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/ABRSearchByNameSimpleProtocol",
+  "timeout": 5,
+  "output_file": "enriched_merchants_demo.csv",
+  "google_api_key": "AIzaSyDBUSk5P4xUCT3kKGkqUmnG0nGZWy3ALLg",
+  "google_search_engine_id": "15de85e08d60a4ac2",
+  "google_client_id": "1069762902179-t5eo3o7no6c776ovbabj2dai2t5lq2ee.apps.googleusercontent.com",
+  "google_client_secret": "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",
+  "google_redirect_uri": "http://localhost:8080/callback",
+  "enable_verification": true,
+  "merchants": [
+    "kmart",
+    "paypal",
+    "bunnings",
+    "officeworks",
+    "7-eleven",
+    "aldi stores",
+    "spotify",
+    "big w",
+    "guzman gomez",
+    "anytime fitness",
+    "otr",
+    "reddy express",
+    "jb hi fi",
+    "linkt",
+    "apple",
+    "remitly",
+    "spotlight",
+    "united",
+    "rebel",
+    "starbucks coffee"
+  ],
+  "troubleshooting": {
+    "abr_guid_error": "Ensure GUID is valid and registered at https://abr.business.gov.au/Tools/WebServices",
+    "endpoint_404": "Verify endpoint URL. Current: https://abr.business.gov.au/abrxmlsearch/AbrXmlSearch.asmx/ABRSearchByNameSimpleProtocol",
+    "timeout_issues": "Increase timeout value (default 5s). Try 10-15 for slow networks",
+    "merchants_not_found": "Check merchant names are spelled correctly. Some may be registered under different legal names"
+  }
+}
