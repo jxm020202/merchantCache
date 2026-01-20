@@ -34,7 +34,13 @@ def main():
         "google_client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
         "google_redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8080/callback"),
         "output_file": os.getenv("OUTPUT_FILE", "enriched_merchants_demo.csv"),
-        "enable_verification": os.getenv("ENABLE_VERIFICATION", "true").lower() == "true"
+        "enable_verification": os.getenv("ENABLE_VERIFICATION", "true").lower() == "true",
+        "merchants": [
+            "kmart", "paypal", "bunnings", "officeworks", "7-eleven",
+            "aldi stores", "spotify", "big w", "guzman gomez", "anytime fitness",
+            "otr", "reddy express", "jb hi fi", "linkt", "apple",
+            "remitly", "spotlight", "united", "rebel", "starbucks coffee"
+        ]
     }
     
     # Initialize ABR client
