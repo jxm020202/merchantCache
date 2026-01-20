@@ -39,7 +39,11 @@ type SearchResultsRecord struct {
 }
 
 type ABRResponse struct {
-	Records []SearchResultsRecord `xml:"searchResultsRecord"`
+	Response struct {
+		SearchResultsList struct {
+			Records []SearchResultsRecord `xml:"searchResultsRecord"`
+		} `xml:"searchResultsList"`
+	} `xml:"response"`
 }
 
 func NewClient(guid, endpoint string, timeout int) *Client {
@@ -98,7 +102,7 @@ func (c *Client) getAllResults(xmlText string) []Result {
 	var results []Result
 	abnRegex := regexp.MustCompile(`^\d{11}$`)
 
-	for _, rec := range response.Records {
+	for _, rec := range response.Response.SearchResultsList.Records {
 		abn := strings.TrimSpace(rec.ABN.IdentifierValue)
 		status := strings.TrimSpace(rec.ABN.IdentifierStatus)
 
@@ -224,36 +228,62 @@ func (c *Client) findBestResult(businessName string, results []Result) Result {
 }
 
 func (c *Client) Lookup(businessName string) (abn, state, legalName, score string) {
-	// Stage 1: Initial search
+	// Simple lookup: just search with the provided name and return the first result
 	xmlResponse, err := c.searchByName(businessName)
 	if err != nil {
 		return
 	}
 
 	allResults := c.getAllResults(xmlResponse)
-	bestResult := c.findBestResult(businessName, allResults)
-
-	if bestResult.ABN == "" {
+	if len(allResults) == 0 {
 		return
 	}
 
-	// Stage 2: Verification search
-	if bestResult.LegalName != "" {
-		xmlResponse2, err := c.searchByName(bestResult.LegalName)
-		if err == nil {
-			allResults2 := c.getAllResults(xmlResponse2)
+	// Return the first result directly without fuzzy matching
+	firstResult := allResults[0]
+	return firstResult.ABN, firstResult.State, firstResult.LegalName, firstResult.Score
+}
 
-			// Look for exact ABN match
-			for _, result := range allResults2 {
-				if result.ABN == bestResult.ABN {
-					bestResult = result
-					break
-				}
+// VerifyABN checks if an ABN is valid and matches the given legal name and state
+func (c *Client) VerifyABN(abn, legalName, state string) bool {
+	// Validate ABN format (11 digits)
+	abnRegex := regexp.MustCompile(`^\d{11}$`)
+	if !abnRegex.MatchString(abn) {
+		return false
+	}
+
+	// Search by the provided legal name to get results
+	xmlResponse, err := c.searchByName(legalName)
+	if err != nil {
+		return false
+	}
+
+	results := c.getAllResults(xmlResponse)
+
+	// Look for exact ABN match
+	for _, result := range results {
+		if result.ABN == abn {
+			// Found matching ABN
+			// If state is provided, verify it matches
+			if state != "" && result.State != state {
+				return false
 			}
+			return true
 		}
 	}
 
-	return bestResult.ABN, bestResult.State, bestResult.LegalName, bestResult.Score
+	return false
+}
+
+// GetAllResults is a public method for testing
+func (c *Client) GetAllResults(businessName string) []Result {
+	xmlResponse, err := c.searchByName(businessName)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return nil
+	}
+	fmt.Printf("XML length: %d\n", len(xmlResponse))
+	return c.getAllResults(xmlResponse)
 }
 
 type Result struct {

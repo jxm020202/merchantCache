@@ -3,13 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"strconv"
-
 	"merchantcache/internal/abr"
 	"merchantcache/internal/config"
 	"merchantcache/internal/data"
-	"merchantcache/internal/google"
 
 	"github.com/joho/godotenv"
 )
@@ -23,105 +19,49 @@ func main() {
 
 	// Initialize ABR client
 	abrClient := abr.NewClient(cfg.ABRGuid, cfg.ABREndpoint, cfg.Timeout)
-
-	// Initialize Google Search client
-	var googleClient *google.Client
-	if cfg.EnableVerification {
-		var err error
-		googleClient, err = google.NewClient(
-			cfg.GoogleAPIKey,
-			cfg.GoogleSearchEngineID,
-			cfg.GoogleClientID,
-			cfg.GoogleClientSecret,
-			cfg.Timeout,
-		)
-		if err == nil {
-			fmt.Println("✓ Google Custom Search API initialized\n")
-		} else {
-			fmt.Printf("⚠️  Google verification disabled: %v\n\n", err)
-			googleClient = nil
-		}
-	}
+	fmt.Println("✓ ABN Registry (ABR) client initialized\n")
 
 	// Initialize data processor
 	processor := data.NewProcessor(cfg.OutputFile)
 
 	// Process each merchant
 	merchants := cfg.GetMerchants()
-	fmt.Printf("Processing %d merchants...\n\n", len(merchants))
-	fmt.Println("Architecture: ABN Lookup → Google Verification → Address Lookup → Output\n")
+	fmt.Printf("Processing %d merchants with ABN lookup only...\n\n", len(merchants))
 
 	for i, merchant := range merchants {
-		// Normalize merchant name
-		brandName := merchant
+		fmt.Printf("[%2d/%d] %s\n", i+1, len(merchants), merchant)
 
-		// STEP 1: ABN Lookup
-		abn, state, legalName, score := abrClient.Lookup(brandName)
-
-		// STEP 2: Google Verification
-		verified := false
-		confidence := 0.0
-		address := ""
-		googleABN := ""
-		googleLegalName := ""
-
-		if googleClient != nil && abn != "" {
-			enriched, err := googleClient.VerifyAndEnrich(abn, legalName, state)
-			if err == nil {
-				verification := enriched["verification"].(map[string]interface{})
-				verified = verification["verified"].(bool)
-				confidence = verification["confidence"].(float64)
-
-				if headOffice, ok := enriched["head_office"].(map[string]interface{}); ok {
-					if addr, ok := headOffice["address"].(string); ok {
-						address = addr
-					}
-				}
-
-				if googleFound, ok := enriched["google_found"].(map[string]interface{}); ok {
-					if ga, ok := googleFound["abn"].(string); ok {
-						googleABN = ga
-					}
-					if gn, ok := googleFound["legal_name"].(string); ok {
-						googleLegalName = gn
-					}
-				}
-			}
+		// Lookup ABN using merchant name
+		fmt.Printf("    [ABN Lookup] Using merchant name: %s\n", merchant)
+		
+		abn, abnState, abnLegalName, score := abrClient.Lookup(merchant)
+		
+		if abn == "" {
+			fmt.Printf("      ✗ ABN not found\n")
+			processor.AddResult(data.Result{
+				MerchantName: merchant,
+				LegalName:    merchant,
+			})
+			fmt.Println()
+			continue
 		}
 
-		// STEP 4: Store enriched result
+		fmt.Printf("      ✓ ABN Found: %s\n", abn)
+		fmt.Printf("      Legal Name: %s\n", abnLegalName)
+		fmt.Printf("      State: %s\n", abnState)
+
+		// Add result
 		processor.AddResult(data.Result{
-			MerchantName:    merchant,
-			ABN:             abn,
-			State:           state,
-			LegalName:       legalName,
-			Score:           score,
-			Verified:        verified,
-			Confidence:      confidence,
-			Address:         address,
-			GoogleABN:       googleABN,
-			GoogleLegalName: googleLegalName,
+			MerchantName: merchant,
+			ABN:          abn,
+			State:        abnState,
+			LegalName:    abnLegalName,
+			Score:        score,
+			Verified:     true,
+			Confidence:   100.0,
 		})
 
-		// Progress indicator
-		abnStatus := "✓"
-		if abn == "" {
-			abnStatus = "✗"
-		}
-
-		verifyStatus := "○"
-		if verified {
-			verifyStatus = "✓"
-		} else if abn == "" {
-			verifyStatus = "—"
-		}
-
-		addrStatus := "—"
-		if address != "" {
-			addrStatus = "✓"
-		}
-
-		fmt.Printf("[%2d/%d] ABN:%s Verify:%s Addr:%s %-30s\n", i+1, len(merchants), abnStatus, verifyStatus, addrStatus, merchant)
+		fmt.Println()
 	}
 
 	// Save results
