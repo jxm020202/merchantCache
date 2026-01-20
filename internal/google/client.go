@@ -348,3 +348,36 @@ func (c *Client) VerifyAndGetAddress(abn, legalName string) (bool, float64, stri
 	verified := confidence >= 40
 	return verified, confidence, address
 }
+// SearchHeadOfficeAddress searches for the head office address of a merchant
+func (c *Client) SearchHeadOfficeAddress(merchantName string, legalName string) (string, error) {
+	// Search for head office/headquarters address
+	query := fmt.Sprintf("%s head office headquarters address Australia", merchantName)
+	results, err := c.Search(query, 5)
+	if err != nil {
+		return "", err
+	}
+
+	if len(results) == 0 {
+		return "", fmt.Errorf("no results found")
+	}
+
+	// Extract address from the first result
+	address := c.extractAddress(results[0])
+	if address != "" {
+		return address, nil
+	}
+
+	// Try alternative search with legal name
+	query = fmt.Sprintf("%s head office address Australia", legalName)
+	results, err = c.Search(query, 5)
+	if err != nil {
+		return "", err
+	}
+
+	if len(results) == 0 {
+		return "", fmt.Errorf("no results found")
+	}
+
+	address = c.extractAddress(results[0])
+	return address, nil
+}

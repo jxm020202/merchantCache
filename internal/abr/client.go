@@ -22,8 +22,21 @@ type SearchResultsRecord struct {
 		IdentifierValue  string `xml:"identifierValue"`
 		IdentifierStatus string `xml:"identifierStatus"`
 	} `xml:"ABN"`
+	ACN struct {
+		IdentifierValue  string `xml:"identifierValue"`
+		IdentifierStatus string `xml:"identifierStatus"`
+	} `xml:"ACN"`
 	MainBusinessPhysicalAddress struct {
-		StateCode string `xml:"stateCode"`
+		StateCode      string `xml:"stateCode"`
+		Postcode       string `xml:"postcode"`
+		AddressDetails struct {
+			AddressLine1 string `xml:"addressLine1"`
+			AddressLine2 string `xml:"addressLine2"`
+			AddressLine3 string `xml:"addressLine3"`
+			AddressLine4 string `xml:"addressLine4"`
+			Suburb       string `xml:"suburb"`
+			State        string `xml:"state"`
+		} `xml:"addressDetails"`
 	} `xml:"mainBusinessPhysicalAddress"`
 	BusinessName struct {
 		OrganisationName string `xml:"organisationName"`
@@ -110,6 +123,7 @@ func (c *Client) getAllResults(xmlText string) []Result {
 			continue
 		}
 
+		acn := strings.TrimSpace(rec.ACN.IdentifierValue)
 		state := strings.TrimSpace(rec.MainBusinessPhysicalAddress.StateCode)
 		legalName := strings.TrimSpace(rec.BusinessName.OrganisationName)
 
@@ -127,6 +141,7 @@ func (c *Client) getAllResults(xmlText string) []Result {
 
 		results = append(results, Result{
 			ABN:       abn,
+			ACN:       acn,
 			State:     state,
 			LegalName: legalName,
 			Score:     score,
@@ -227,7 +242,7 @@ func (c *Client) findBestResult(businessName string, results []Result) Result {
 	return maxResult
 }
 
-func (c *Client) Lookup(businessName string) (abn, state, legalName, score string) {
+func (c *Client) Lookup(businessName string) (abn, acn, state, legalName, score string) {
 	// Simple lookup: just search with the provided name and return the first result
 	xmlResponse, err := c.searchByName(businessName)
 	if err != nil {
@@ -241,7 +256,7 @@ func (c *Client) Lookup(businessName string) (abn, state, legalName, score strin
 
 	// Return the first result directly without fuzzy matching
 	firstResult := allResults[0]
-	return firstResult.ABN, firstResult.State, firstResult.LegalName, firstResult.Score
+	return firstResult.ABN, firstResult.ACN, firstResult.State, firstResult.LegalName, firstResult.Score
 }
 
 // VerifyABN checks if an ABN is valid and matches the given legal name and state
@@ -288,9 +303,11 @@ func (c *Client) GetAllResults(businessName string) []Result {
 
 type Result struct {
 	ABN       string
+	ACN       string
 	State     string
 	LegalName string
 	Score     string
+	Address   string
 }
 
 func stringToSet(strs []string) map[string]bool {

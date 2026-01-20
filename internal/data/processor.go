@@ -11,6 +11,7 @@ import (
 type Result struct {
 	MerchantName    string
 	ABN             string
+	ACN             string
 	State           string
 	LegalName       string
 	Score           string
@@ -53,6 +54,7 @@ func (p *Processor) SaveToFile() (string, error) {
 	header := []string{
 		"merchant_name",
 		"abn",
+		"acn",
 		"state",
 		"legal_name",
 		"score",
@@ -69,6 +71,7 @@ func (p *Processor) SaveToFile() (string, error) {
 		row := []string{
 			r.MerchantName,
 			r.ABN,
+			r.ACN,
 			r.State,
 			r.LegalName,
 			r.Score,
@@ -113,14 +116,6 @@ func (p *Processor) PrintSummary() {
 	fmt.Printf("  ✗ ABN Not Found:          %d\n", notFound)
 	fmt.Printf("  • Success rate:           %.1f%%\n", float64(found)/float64(total)*100)
 	fmt.Println()
-	fmt.Println("Google Verification:")
-	fmt.Printf("  ✓ Verified:               %d\n", verified)
-	verifyRate := 0.0
-	if found > 0 {
-		verifyRate = float64(verified) / float64(found) * 100
-	}
-	fmt.Printf("  • Verification rate:      %.1f%%\n", verifyRate)
-	fmt.Println()
 	fmt.Println("Address Lookup:")
 	fmt.Printf("  ✓ Head Office Found:      %d\n", withAddress)
 	coverage := 0.0
@@ -131,22 +126,23 @@ func (p *Processor) PrintSummary() {
 	fmt.Println("============================================================")
 	fmt.Println()
 
-	// Print table
-	fmt.Printf("%-30s | %-15s | %-15s | %-10s | %-10s\n", "Merchant", "ABN", "Legal Name", "Verified", "Confidence")
-	fmt.Println(strings.Repeat("-", 100))
+	// Print detailed results table
+	fmt.Println("DETAILED RESULTS:")
+	fmt.Println("============================================================")
+	fmt.Printf("%-4s | %-20s | %-12s | %-10s | %-25s | %-50s\n", 
+		"No.", "Merchant", "ABN", "ACN", "Legal Name", "Head Office Address")
+	fmt.Println(strings.Repeat("-", 150))
 
-	for _, r := range p.rows {
-		verStr := "No"
-		if r.Verified {
-			verStr = "Yes"
-		}
-		fmt.Printf("%-30s | %-15s | %-15s | %-10s | %-10.2f\n",
-			truncate(r.MerchantName, 30),
+	for idx, r := range p.rows {
+		fmt.Printf("%-4d | %-20s | %-12s | %-10s | %-25s | %-50s\n",
+			idx+1,
+			truncate(r.MerchantName, 20),
 			r.ABN,
-			truncate(r.LegalName, 15),
-			verStr,
-			r.Confidence)
+			r.ACN,
+			truncate(r.LegalName, 25),
+			truncate(r.Address, 50))
 	}
+	fmt.Println("============================================================")
 }
 
 func boolToYesNo(b bool) string {
