@@ -34,6 +34,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Go
+/merchantcache
+*.out
+
 # IDE
 .vscode/
 .idea/
