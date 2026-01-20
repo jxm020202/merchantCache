@@ -1,0 +1,10 @@
+[user]
+    name = Shivam Sharma
+    email = shivam.sharma@we.money
+    signingkey = 1948A904E906EC01
+
+[commit]
+gpgsign = true
+
+[tag]
+gpgsign = true

@@ -1,6 +1,0 @@
-requests
-supabase
-python-dotenv
-websockets
-google-api-python-client
-google-auth

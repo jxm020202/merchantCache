@@ -1,0 +1,6 @@
+# Env & secrets
+.env
+
+
+# Editor/IDE
+.cursor/
